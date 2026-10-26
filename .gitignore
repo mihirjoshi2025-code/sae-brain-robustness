@@ -1,0 +1,37 @@
+# --- Python / env ---
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+uv.lock
+
+# --- Data & large artifacts (NEVER commit) ---
+# Raw/preprocessed fMRI lives outside the repo (~/brain-llm-data/).
+*.hf5
+*.h5
+*.nii
+*.nii.gz
+*.TextGrid
+*.wav
+data/
+activations/
+cache/
+models/
+*.safetensors
+*.bin
+*.pt
+*.ckpt
+
+# --- Obsidian vault internals ---
+.obsidian/
+
+# --- OS / editor ---
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# --- logs / scratch ---
+*.log
+nohup.out
