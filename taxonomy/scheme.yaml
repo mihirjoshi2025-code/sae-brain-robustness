@@ -1,0 +1,76 @@
+# Feature category scheme (NEXT_STEPS T10). Mirrors the 5 buckets of the source paper
+# (Guo, Wu, Yiu 2026: semantic / syntactic / lexical / prediction / other) so Claim 2 is
+# tested on its own terms. Semantic subtypes follow their Claim-3 region hypotheses.
+#
+# STATUS: DRAFT -- awaiting the project lead's review. Once frozen, commit this file BEFORE
+# any labeling run (invariant 2) and never change the categories afterwards; if kappa < 0.7,
+# only the guideline text may be refined.
+status: draft
+version: 0.1
+date: 2026-10-25
+
+unit: >
+  One SAE feature, judged from its explanation (Neuronpedia or our auto-interp) plus its
+  top-20 activating word contexts in our stories. Judge what makes the feature FIRE, not
+  what tokens happen to follow it.
+
+categories:
+  semantic:
+    definition: >
+      Fires for a meaning, concept, topic, or referent, regardless of exact word form or
+      grammatical role: the same feature would fire for synonyms, paraphrases, or other
+      words about the same thing.
+    positive: ["references to food and eating (bread, dinner, hungry)",
+               "expressions of fear or anxiety",
+               "family members and kinship (mother, uncle, siblings)"]
+    near_miss_negative: ["fires only on the exact token 'mother' and its capitalized form -> lexical",
+                         "fires on plural nouns of any topic -> syntactic"]
+    subtypes:   # for Claim 3 only; every semantic feature also gets one subtype
+      objects: concrete things, tools, food, body parts, places-as-things
+      emotion: feelings, affective states, evaluations
+      social: people, relationships, mental states of others, communication
+      space: locations, directions, spatial relations, movement through space
+      events: actions, happenings, temporal sequences of episodes
+      other_semantic: abstract topics not covered above (numbers-as-quantity, money, law...)
+
+  syntactic:
+    definition: >
+      Fires for a grammatical role, structure, or function independent of content: part of
+      speech, tense/agreement, clause boundaries, function words in a structural role,
+      punctuation-like structure in speech.
+    positive: ["past-tense verbs", "the subject noun of a clause", "tokens right after a relative pronoun"]
+    near_miss_negative: ["fires on 'the' only before food words -> semantic",
+                         "fires on any token starting with 'th' -> lexical"]
+
+  lexical:
+    definition: >
+      Fires for surface form: a specific token or small set of tokens, spelling, subword
+      pieces, capitalization, or sound/orthographic patterns, with little dependence on
+      meaning or role.
+    positive: ["the token ' and' in any context", "words ending in '-ing' as a string pattern",
+               "a specific name token"]
+    near_miss_negative: ["fires on many different words for dogs -> semantic",
+                         "fires on gerunds acting as nouns -> syntactic"]
+
+  prediction:
+    definition: >
+      Best described by what comes NEXT or by position/discourse state rather than by the
+      current token: anticipates a specific upcoming token or class, tracks position in a
+      sentence or story, sequence repetition, quotes/dialogue state.
+    positive: ["fires on the token before ' of' is likely", "high near the start of a sentence",
+               "fires on repeated phrases (induction-like)"]
+    near_miss_negative: ["fires on the word 'next' -> lexical", "fires on future-tense verbs -> syntactic"]
+
+  other:
+    definition: >
+      Uninterpretable, polysemantic with no dominant reading, dead in our stimuli, or an
+      artifact (e.g. fires on the first window token).
+    positive: ["mixed contexts with no shared property", "fires only at window position 0"]
+    near_miss_negative: ["two readings where one clearly dominates -> label the dominant one"]
+
+tie_break:
+  - If a feature fits several categories, choose the one that explains the MOST of its top-20 contexts.
+  - Meaning beats form: if contexts share a meaning AND a token, but the meaning holds across different tokens, label semantic.
+  - Structure beats form: if contexts share a grammatical role across different tokens, label syntactic.
+  - Use prediction only when the current token alone cannot explain firing.
+  - Use other rather than guessing; confidence below "medium" goes to other.

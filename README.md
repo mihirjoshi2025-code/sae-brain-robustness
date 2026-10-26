@@ -18,7 +18,9 @@ Do SAE-based brain-encoding results reflect how the brain processes language, or
 | `scripts/` | Entry points (`smoke_test.py`, `download_data.sh`) |
 | `Notes/` | Plain-English breakdown + literature summaries + `Vocab/` |
 | `Plans/` | Week-by-week execution plan (4 phases, 3 gates) |
-| `PROGRESS.md` | Build log |
+| `PROGRESS.md` | Plain-English progress overview |
+| `NEXT_STEPS.md` | Laptop-scoped plan with time estimates |
+| `BUILD_LOG.md` | Detailed technical build log |
 | `CLAUDE.md` | Protected project context |
 
 ## Data (not in repo)
@@ -32,4 +34,4 @@ uv pip install -e .               # deps from pyproject.toml
 ```
 
 ## Status
-Pipeline validated end-to-end (smoke test: signal 0.985 / noise 0.002). Next: reproduce the dense baseline on real fMRI (Gate A). See `PROGRESS.md`.
+Gate A passed: GPT-2 layer 9 dense baseline reproduced on subject UTS01 (mean test corr 0.22, top-1% 0.53). See `PROGRESS.md` and `NEXT_STEPS.md`.

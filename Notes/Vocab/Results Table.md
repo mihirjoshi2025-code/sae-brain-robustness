@@ -8,6 +8,8 @@ aliases: [results table, results grid, shared results table]
 
 **What each row holds:** configuration id (model × [[Dictionary Size|size]] × dataset × [[Layer|layer]]), [[Seed|seed]], baseline scores, feature scores, [[Noise Ceiling|noise ceiling]], significance.
 
+**Where it lives:** `results/runs.csv`, appended by `pipeline/results.py::log_run` (fixed columns; one row per run or CV fold).
+
 **Why we care:** the Phase 4 **results grid** and write-up are built directly from this table. Keep it honest and append-only.
 
 **Related:** [[Seed]] · [[Experimental Grid]] · [[Controls and Baselines]]

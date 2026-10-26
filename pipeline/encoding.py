@@ -101,3 +101,24 @@ def noise_ceiling_from_repeats(repeats: np.ndarray) -> np.ndarray:
             b = (b - b.mean(0)) / (b.std(0) + 1e-8)
             cors.append((a * b).mean(0))
     return np.mean(cors, axis=0)
+
+
+def spearman_brown(r: np.ndarray, n: int) -> np.ndarray:
+    """Reliability of an n-repeat average from single-repeat reliability r."""
+    r = np.clip(np.nan_to_num(r), 0.0, None)
+    return n * r / (1.0 + (n - 1) * r)
+
+
+def noise_ceiling_corr(repeats: np.ndarray) -> dict:
+    """Correlation-scale ceiling for predicting the MEAN of all repeats.
+
+    The test target is the n-repeat average, so the single-repeat pairwise corr
+    (a reliability, i.e. squared scale) understates how predictable the target is.
+    Spearman-Brown gives the reliability of the n-average; its sqrt is the max
+    correlation a perfect model could reach. Normalized score = corr / ceiling.
+    """
+    n_rep = repeats.shape[0]
+    r1 = np.nan_to_num(noise_ceiling_from_repeats(repeats))
+    rel_n = spearman_brown(r1, n_rep)
+    return {"single_rep_r": r1, "reliability_n": rel_n,
+            "ceiling": np.sqrt(rel_n), "n_rep": n_rep}

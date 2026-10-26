@@ -6,16 +6,16 @@ tags: [vocab, index]
 Plain-English definitions for the Brain–LLM SAE notes. Start with [[Project Overview]].
 
 ## The AI side
-[[Sparse Autoencoder (SAE)]] · [[Feature]] · [[Dense Hidden States]] · [[Superposition]] · [[Dictionary Size]] · [[Layer]] · [[Surprisal]] · [[Checkpoint]] · [[Pythia]]
+[[Sparse Autoencoder (SAE)]] · [[Feature]] · [[Dense Hidden States]] · [[Superposition]] · [[Dictionary Size]] · [[Reconstruction Error (FVU)]] · [[Layer]] · [[Surprisal]] · [[Checkpoint]] · [[Pythia]]
 
 ## Public SAE tooling
 [[Gemma Scope]] · [[Llama Scope]] · [[SAELens]]
 
 ## The brain side
-[[fMRI]] · [[Voxel]] · [[Cortical Regions]] · [[Hemodynamic Delay]] · [[Noise Ceiling]]
+[[fMRI]] · [[Voxel]] · [[Cortical Regions]] · [[Hemodynamic Delay]] · [[Noise Ceiling]] · [[Spearman-Brown Correction]]
 
 ## The encoding method
-[[Encoding Model]] · [[Ridge Regression]] · [[himalaya]] · [[Contiguous Train-Test Split]]
+[[Encoding Model]] · [[Ridge Regression]] · [[Kernel Ridge]] · [[himalaya]] · [[Contiguous Train-Test Split]]
 
 ## Datasets
 [[LeBel-Huth fMRI]] · [[Pereira 2018]]

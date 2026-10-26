@@ -1,0 +1,46 @@
+# Model x SAE grid (Step 2). Layers are frozen separately in configs/layers.yaml
+# (scripts/sweep_layers.py) before any SAE result is looked at.
+# SAE coverage checked against the SAELens pretrained registry (sae-lens 6.54.12), 2026-10-25.
+# Hook convention: our layer L = HF hidden_states[L+1] = blocks.L.hook_resid_post.
+
+models:
+  gpt2:
+    status: confirmed
+    hf_id: gpt2
+    n_layers: 12
+    saes:
+      # Same OpenAI v5 TopK recipe at both widths, so size is the only thing that changes.
+      small: {release: gpt2-small-resid-post-v5-32k,  sae_id: "blocks.{L}.hook_resid_post", width: 32768}
+      large: {release: gpt2-small-resid-post-v5-128k, sae_id: "blocks.{L}.hook_resid_post", width: 131072}
+    coverage: all 12 layers, both widths
+    labels: Neuronpedia gpt2-small/{L}-res_post_32k-oai (and 128k)
+
+  gemma-2-2b:
+    status: confirmed, blocked on Hugging Face login + Gemma license (gated download)
+    hf_id: google/gemma-2-2b
+    n_layers: 26
+    saes:
+      small: {release: gemma-scope-2b-pt-res-canonical, sae_id: "layer_{L}/width_16k/canonical", width: 16384}
+      large: {release: gemma-scope-2b-pt-res-canonical, sae_id: "layer_{L}/width_65k/canonical", width: 65536}
+    coverage: all 26 layers, both widths
+    labels: Neuronpedia gemma-2-2b/{L}-gemmascope-res-16k (and 65k)
+    todo: run scripts/sweep_layers.py --model google/gemma-2-2b to freeze layers before SAEs
+
+  gemma-3-1b-pt:
+    status: confirmed by the T2 model-3 rule (scripts/check_saes.py), blocked on Hugging Face login + Gemma license
+    hf_id: google/gemma-3-1b-pt
+    n_layers: 26
+    saes:
+      # Only 16k and 262k cover all 26 layers (65k exists at 4 layers only); ratio 16x satisfies D4.
+      # Each width ships l0_small / l0_big variants. Pre-registered pick (before any Gemma result):
+      # the variant whose reported L0 is closest to 64; resolve from the SAE cfg at T9 and record it here.
+      small: {release: gemma-scope-2-1b-pt-res-all, sae_id: "layer_{L}_width_16k_l0_{V}", width: 16384}
+      large: {release: gemma-scope-2-1b-pt-res-all, sae_id: "layer_{L}_width_262k_l0_{V}", width: 262144}
+    coverage: all 26 layers, both widths
+    caveat: same family as model 2 (Gemma). The rule prefers a different family, but no non-Gemma
+      model passes (>= 2 residual widths in early/middle/late thirds and <= 8 GB bf16).
+    rejected:
+      llama-3.1-8b: Llama Scope 32k/128k at all layers, but ~16 GB bf16 (> 8 GB); stretch only
+      gemma-3-4b-pt: 16k/65k/262k/1m, all layers, but ~8.6 GB bf16
+      pythia-70m-deduped: SAEBench 4k/16k at layers 3-4 only (no early-third pair)
+      qwen3-1.7b-base: qwen-scope 32k only (one width)

@@ -1,0 +1,47 @@
+# Dataset inventory (NEXT_STEPS T7). Data lives outside the repo under ~/brain-llm-data/.
+# Freeze the story list before rerunning anything; layers stay frozen (configs/layers.yaml).
+podcast:                       # LeBel/Huth ds003020, preprocessed .hf5 + TextGrids
+  root: ~/brain-llm-data/ds003020
+  subjects: [UTS01]            # D5: UTS02/UTS03 only if time is left after T9
+  extra_subjects_downloaded: [UTS02, UTS03]   # same 11 stories as UTS01's original set
+  test_story: wheretheressmoke # 10 repeats; never used for model selection
+  train_stories:               # D6: original 10 + 15 added 2026-10-25
+    - adollshouse
+    - avatar
+    - buck
+    - exorcism
+    - food
+    - legacy
+    - naked
+    - souls
+    - sweetaspie
+    - treasureisland
+    # added: first 15 UTS01 stories (alphabetical) on OpenNeuro that have a TextGrid
+    - adventuresinsayingyes
+    - afatherscover
+    - againstthewind
+    - alternateithicatom
+    - backsideofthestorm
+    - becomingindian
+    - beneaththemushroomcloud
+    - birthofanation
+    - bluehope
+    - breakingupintheageofgoogle
+    - catfishingstrangerstofindmyself
+    - cautioneating
+    - christmas1940
+    - cocoonoflove
+    - comingofageondeathrow
+  train_stories_original: [adollshouse, avatar, buck, exorcism, food, legacy, naked, souls, sweetaspie, treasureisland]
+
+pereira:                       # Pereira et al. 2018, osf.io/crwz7 (scripts/download_pereira.py)
+  root: ~/brain-llm-data/pereira2018   # h5/{subj}_exp{2,3}.h5 via pipeline/pereira.convert
+  experiments:
+    2: {n_sentences: 384, n_passages: 96, n_topics: 24,
+        subjects: [P01, M02, M04, M07, M08, M09, M14, M15]}
+    3: {n_sentences: 243, n_passages: 72, n_topics: 24,
+        subjects: [P01, M02, M03, M04, M07, M15]}
+  cv: {outer_folds: 8, inner_folds: 5, grouping: passage}
+  sentence_feature: last token, preceding sentences of the same passage as context, BOS prepended (D8)
+  voxel_selection: languageLH + languageRH fROIs (shipped per-subject atlas)
+  noise_ceiling: across-subject, Brain-Score subject-pool extrapolation (no per-repetition data public); see pipeline/pereira.ceilings
