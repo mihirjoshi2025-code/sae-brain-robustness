@@ -11,17 +11,12 @@ Do SAE-based brain-encoding results reflect how the brain processes language, or
 | Path | What |
 |---|---|
 | `pipeline/` | Voxelwise ridge encoding (FIR hemodynamic delays, contiguous split, scoring, noise ceiling) |
-| `features/` | LLM activation extraction (dense now; SAE next) |
+| `features/` | LLM activation extraction (dense + SAE codes, cached) |
 | `controls/` | Baselines & statistics |
 | `taxonomy/` | SAE feature labeling + inter-rater agreement |
 | `configs/` | One file per configuration |
 | `scripts/` | Entry points (`smoke_test.py`, `download_data.sh`) |
-| `Notes/` | Plain-English breakdown + literature summaries + `Vocab/` |
-| `Plans/` | Week-by-week execution plan (4 phases, 3 gates) |
-| `PROGRESS.md` | Plain-English progress overview |
-| `NEXT_STEPS.md` | Laptop-scoped plan with time estimates |
-| `BUILD_LOG.md` | Detailed technical build log |
-| `CLAUDE.md` | Protected project context |
+| `results/runs.csv` | Every run's config and scores |
 
 ## Data (not in repo)
 fMRI = OpenNeuro **ds003020** (LeBel/Huth). Preprocessed matrices + TextGrids live **outside** the repo in `~/brain-llm-data/`. Never commit raw data (see `.gitignore`).
@@ -34,4 +29,6 @@ uv pip install -e .               # deps from pyproject.toml
 ```
 
 ## Status
-Gate A passed: GPT-2 layer 9 dense baseline reproduced on subject UTS01 (mean test corr 0.22, top-1% 0.53). See `PROGRESS.md` and `NEXT_STEPS.md`.
+- Gate A passed: GPT-2 dense baseline reproduced on subject UTS01 (best layer 7: mean test corr 0.22, top-1% 0.53, ~35% of the noise ceiling).
+- Layers frozen before any SAE result (`configs/layers.yaml`): GPT-2 7/3/11, Gemma 2 2B 13/6/25, Gemma 3 1B 10/6/25 (best/early/late).
+- Claim 1 (GPT-2): fails under the pre-registered pipeline at every layer and SAE size; see `results/runs.csv`.

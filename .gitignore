@@ -35,3 +35,11 @@ models/
 # --- logs / scratch ---
 *.log
 nohup.out
+
+# --- Private notes / working docs (kept locally, never pushed) ---
+# All markdown except the public README.
+*.md
+!README.md
+Notes/
+Plans/
+CC-Session-Logs/
