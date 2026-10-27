@@ -60,16 +60,23 @@ def word_activations(bundle, words: list[str], layer,
     hooks = [_blocks(model)[L].register_forward_hook(
         lambda mod, inp, out, L=L: grab.__setitem__(L, out[0] if isinstance(out, tuple) else out))
         for L in layers]
+    # Gemma is trained with BOS at position 0 (its SAEs too): prepend it to every
+    # window and drop that position from the outputs. GPT-2 runs without BOS.
+    bos = tok.bos_token_id if "gemma" in model.config.model_type else None
+    off = 1 if bos is not None else 0
+    if off:
+        max_len -= 1
     starts = list(range(0, max(1, n_tok), stride))
     try:
         for s in starts:
             e = min(s + max_len, n_tok)
-            window = torch.tensor(ids_arr[s:e][None, :], device=device)
+            ids = ids_arr[s:e] if not off else np.r_[bos, ids_arr[s:e]]
+            window = torch.tensor(ids[None, :], device=device)
             model(input_ids=window)
             # fresh region: for first window all, else only second half (>= s+stride)
             fresh_start = s if s == 0 else s + stride
             for L in layers:
-                hs = grab[L][0].float().cpu().numpy()  # (win, d_model)
+                hs = grab[L][0, off:].float().cpu().numpy()  # (win, d_model)
                 for wi, gpos in last_tok_of_word.items():
                     if fresh_start <= gpos < e:
                         feats[L][wi] = hs[gpos - s]

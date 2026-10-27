@@ -1,6 +1,6 @@
 # Progress: Plain-English Overview
 
-_Last updated: Oct 26, 2026. For the detailed technical log, see `BUILD_LOG.md`. For what comes next, see `NEXT_STEPS.md`._
+_Last updated: Oct 27, 2026. For the detailed technical log, see `BUILD_LOG.md`. For what comes next, see `NEXT_STEPS.md`._
 
 ## The project in one paragraph
 
@@ -31,6 +31,7 @@ Good follow-ups to have ready:
 | 10 | **Built the controls** that make this a robustness study: an untrained (random-weight) GPT-2, scrambled "look-alike" features, a random dictionary, simple baselines (how fast words are coming, where we are in the sentence, and "surprisal" = how unexpected each word is), and a significance test. | If a fake or trivial feature set scores as well as the real one, the "brain alignment" claim is empty. | Done |
 | 11 | **Found and fixed a subtle layer bug.** The library hands back GPT-2's last layer *after* a final normalization step, which is not what the public SAEs were trained on. Now every layer is read directly from the network. Only layer 11 changed; the layer choice still stands. | Feeding an SAE the wrong input would quietly ruin every SAE result for that layer. | Done |
 | 12 | **Built a memory-light way to fit the big SAE feature sets.** Instead of working with 128,000 features directly, it works with a much smaller table of how similar each brain scan is to every other one. I checked that it gives the same answer as the original method (they agree to 6 parts in 10 million). | A 128K-feature dictionary is too big to fit the normal way on a laptop. Being provably identical keeps the pipeline fixed across all 12 setups. | Done |
+| 13 | **Chose and locked the Gemma layers** (overnight, Oct 27), same no-peeking method, using the 25 training stories. **Gemma 2:** best = layer 13, early = 6, late = 25. **Gemma 3:** best = layer 10, early = 6, late = 25. Gemma 3's layers 10 and 11 were nearly tied (0.13764 vs 0.13756); the rule set in advance picks the higher one, so layer 10. | All three models now have locked layers, so SAE work on Gemma can start without any risk of peeking. All three show the same shape: prediction peaks in the middle of the network and falls off towards the end. | Done |
 
 ### What the Gate A numbers mean
 
@@ -79,9 +80,9 @@ A trained model clearly beats every control, so the baseline is real signal, not
 
 **Why this matters for the project:** the original paper's claim depends on analysis choices that papers rarely report. That's exactly the kind of fragility this study is designed to find. The first result was the method fixed in advance, and it stays the headline. The other two are reported openly as a check on how sensitive the result is, not swapped in quietly.
 
-## In progress (Oct 26)
+## In progress (Oct 27)
 
-- **Picking the Gemma layers.** Same no-peeking method as GPT-2: test every layer using training stories only, then lock the choice before any SAE is touched. Gemma uses the **new 25-story training set** (more reliable). GPT-2's layers stay locked from its earlier 10-story test; they are not re-picked.
+- **Next up: Gemma features.** Save Gemma 2 and Gemma 3 activity at their locked layers, then run Claim 1 and the controls on them, the same way as for GPT-2.
 - **Second dataset (Pereira 2018, people reading single sentences): paused, about 80% done.** Data for 8 people is downloaded (3.2 GB), along with each person's own language-region maps, which Claims 3–4 will need. The raw-activity baseline is finished for experiment 2 (all 8 people). Experiment 3 is done for 1 person at 2 of 3 layers; the other 5 people are left. Resuming it takes about 25 minutes and needs no new downloads. Caveat: this dataset gives only one averaged scan per sentence, so its "best possible score" can only be estimated roughly from the other people.
 - **More training data: done.** 15 more podcast stories for the main person (10 → 25). Two more people's recordings (11 stories each) also came down before I narrowed the plan; kept for later.
 - **Feature categories:** a first draft of the category rules (meaning, grammar, word form, prediction, other) is written and waiting for my review. It must be locked before any feature gets labeled.

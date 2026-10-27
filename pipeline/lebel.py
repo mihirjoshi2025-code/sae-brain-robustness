@@ -5,7 +5,10 @@ per-voxel correlation. One code path so every script scores the same way.
 """
 from __future__ import annotations
 
+import os
+
 import numpy as np
+import yaml
 import scipy.sparse as sp
 from himalaya.kernel_ridge import KernelRidgeCV
 from himalaya.ridge import RidgeCV
@@ -15,9 +18,11 @@ from pipeline import data as D
 from pipeline.downsample import lanczos_downsample
 from pipeline.encoding import add_fir_delays, zscore_fit
 
-TRAIN_STORIES = ["adollshouse", "avatar", "buck", "exorcism", "food",
-                 "legacy", "naked", "souls", "sweetaspie", "treasureisland"]
-TEST_STORY = "wheretheressmoke"
+_DATA = yaml.safe_load(open(os.path.join(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__))), "configs", "data.yaml")))["podcast"]
+TRAIN_STORIES = list(_DATA["train_stories"])            # 25 stories (D6, frozen 2026-10-25)
+TRAIN_STORIES_ORIGINAL = list(_DATA["train_stories_original"])  # 10; GPT-2 layer sweep + Gate A
+TEST_STORY = _DATA["test_story"]
 ALPHAS = np.logspace(0, 6, 10)
 
 

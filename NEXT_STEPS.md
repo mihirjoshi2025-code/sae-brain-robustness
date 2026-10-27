@@ -24,7 +24,7 @@ _Last updated: 2026-10-25. Audience: an AI coding agent working solo in this rep
 | T6 | Control suite (untrained, random dictionary, word rate, sentence position, surprisal, block permutation) | done (random dictionary runs inside `run_claim1.py`) | T4 |
 | T7 | Data expansion: more podcast stories; Pereira 2018 loader + baseline | todo | T0 (can run in parallel with T3–T6) |
 | T8 | Config-driven grid runner over all cells | todo | T5, T6, T7 |
-| T9 | Models 2–3: layer sweep, extraction, grid | todo | T8 |
+| T9 | Models 2–3: layer sweep, extraction, grid | in progress (layers frozen Oct 27) | T8 |
 | **Gate B** | Controls on every cell; κ ≥ 0.7 | — | T9, T10 |
 | T10 | Feature taxonomy: scheme, labels, κ, cross-dictionary matching | todo | T3 (scheme part can start any time) |
 | T11 | Score claims 2–4 | todo | T9, T10 |

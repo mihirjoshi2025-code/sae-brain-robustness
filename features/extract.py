@@ -27,7 +27,14 @@ def load_model(model_name: str = "gpt2", device: str | None = None):
 
     device = device or get_device()
     tok = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModel.from_pretrained(model_name, output_hidden_states=True)
+    kw = {}
+    if "gemma" in model_name.lower():
+        # >1B params: bf16 weights (activations are cast to float32 downstream);
+        # Gemma 2 needs eager attention for its logit softcapping.
+        kw["dtype"] = torch.bfloat16
+        if "gemma-2" in model_name.lower():
+            kw["attn_implementation"] = "eager"
+    model = AutoModel.from_pretrained(model_name, output_hidden_states=True, **kw)
     model.to(device).eval()
     return model, tok
 

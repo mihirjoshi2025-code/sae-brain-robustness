@@ -93,3 +93,14 @@ Note: 4 `claim1_sae_vs_dense` rows with blank `cv` and no CI are from an aborted
 | SAE 128k | .013 | **.170 (.263)**, 14.4k of 117k cols | .145 (.224) |
 | randdict 128k | .037 | .157, 25.8k cols | .152 |
 Takeaways: (1) rare-column inflation explains the near-zero pre-registered SAE scores. (2) Under either alternative SAE ≈ 70–77% of dense (point estimates, no CI): still below the 0.9 bar, so the Claim 1 verdict is "fails" in all three variants, but by very different margins. (3) Whether SAE beats the random dictionary also flips: SAE wins with the frequency filter (.173 vs .153), loses with global scaling (.149 vs .166). Both are evaluation-choice sensitivities worth reporting.
+
+## Day 4 (Oct 27): Gemma layers frozen (T9 part 1)
+
+`scripts/overnight_gemma_sweeps.sh` (caffeinate; resumable from runs.csv folds) ran `sweep_layers.py` for both Gemma models on the 25-story UTS01 training set, story-level 5-fold CV, top 10,000 voxels, `cv=story5`. Gemma 2 finished ~07:35, Gemma 3 at 10:37 (exit 0). Activations read from the raw decoder-block output via hooks, BOS prepended per window, bf16.
+
+| model | best | early | late | peak CV r | layer-25 CV r |
+|---|---|---|---|---|---|
+| gemma-2-2b | 13 | 6 | 25 | .1457 | .1198 |
+| gemma-3-1b-pt | 10 | 6 | 25 | .13764 | .1174 |
+
+Gemma 3 near-tie: L10 .13764 vs L11 .13756 (5-fold means from runs.csv); argmax rule picks 10, no override. GPT-2 layers stay frozen from the 10-story sweep (not re-picked). Written to `configs/layers.yaml`; no SAE result for either Gemma model exists yet.

@@ -12,26 +12,36 @@ The choice is written to `configs/layers.yaml`; an existing entry for the model 
 never overwritten (that would be re-picking after the fact).
 
 Usage:
-  python scripts/sweep_layers.py --model gpt2
+  python scripts/sweep_layers.py --model gemma-2-2b     # key in configs/models.yaml
+
+Uses lebel.TRAIN_STORIES (25 stories since 2026-10-26; GPT-2 was frozen on the
+original 10). TR-level features for every layer are cached as feature set
+"dense-tr" (word-level for 26 Gemma layers would not fit the disk budget);
+word-level caches are built later only for the frozen layers. Resumable: folds
+already in results/runs.csv for the same model/layer/stories are reused.
 """
 import argparse
+import os
 import sys
 import time
 from datetime import date
 from pathlib import Path
 
+import h5py
 import numpy as np
+import pandas as pd
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from features.cache import word_feats  # noqa: E402
+from features.cache import ACT_ROOT, _cached, cache_path  # noqa: E402
+from features.word_features import word_activations  # noqa: E402
 from features.extract import load_model  # noqa: E402
 from pipeline import data as D  # noqa: E402
 from pipeline import lebel as LB  # noqa: E402
 from pipeline.encoding import noise_ceiling_corr  # noqa: E402
-from pipeline.results import log_run  # noqa: E402
+from pipeline.results import RESULTS_CSV, log_run  # noqa: E402
 
 SEED = 0
 N_FOLDS = 5
@@ -53,14 +63,16 @@ def main():
         sys.exit(f"{args.model} layers already frozen in {CONFIG}; refusing to re-pick.")
 
     from transformers import AutoConfig
-    n_layers = AutoConfig.from_pretrained(args.model).num_hidden_layers
+    models = yaml.safe_load(open(ROOT / "configs" / "models.yaml"))["models"]
+    hf_id = models.get(args.model, {}).get("hf_id", args.model)
+    n_layers = AutoConfig.from_pretrained(hf_id).num_hidden_layers
     layers = list(range(n_layers))
 
     _bundle = []
     def bundle():
         if not _bundle:
-            print(f"loading {args.model}...")
-            _bundle.append(load_model(args.model))
+            print(f"loading {hf_id}...", flush=True)
+            _bundle.append(load_model(hf_id))
         return _bundle[0]
 
     # Voxel subset: model-agnostic reliability from the test repeats (same as Gate A).
@@ -70,17 +82,23 @@ def main():
 
     stories = LB.TRAIN_STORIES
     Y = {st: D.load_bold(st, args.subject)[:, keep] for st in stories}
-    print("caching word activations for all layers...")
-    wf = {st: word_feats(bundle, args.model, st, layers) for st in stories}
+    print("caching TR-level activations for all layers...", flush=True)
+    for st in stories:
+        tr_feats(bundle, args.model, st, layers, len(Y[st]))
     folds = np.array_split(np.array(stories), N_FOLDS)
+    done = logged_folds(args.model)
 
     cv = {}
     for L in layers:
-        X = {st: LB.tr_features(wf[st][L], st, len(Y[st])) for st in stories}
+        X = {st: tr_feats(bundle, args.model, st, [L], len(Y[st]))[L] for st in stories}
         fold_means = []
         for k, val in enumerate(folds):
             t0 = time.time()
             tr = [s for s in stories if s not in val]
+            key = (L, f"val_fold{k}", " ".join(tr), " ".join(val))
+            if key in done:
+                fold_means.append(done[key])
+                continue
             scores = LB.fit_score([X[s] for s in tr], [Y[s] for s in tr],
                                   [X[s] for s in val], [Y[s] for s in val],
                                   delays=args.delays)
@@ -93,15 +111,17 @@ def main():
                 "train_stories": tr, "eval_stories": list(val),
                 "n_voxels": len(keep), "voxel_selection": "top single-rep r (test repeats)",
                 "delays": args.delays, "alphas": "logspace(0,6,10)", "seed": SEED,
-                "elapsed_s": round(time.time() - t0, 1), **res,
+                "cv": "story5", "elapsed_s": round(time.time() - t0, 1), **res,
             })
         cv[L] = float(np.mean(fold_means))
-        print(f"layer {L:2d}: CV mean corr = {cv[L]:.4f}  (folds {np.round(fold_means, 3)})")
+        print(f"layer {L:2d}: CV mean corr = {cv[L]:.4f}  (folds {np.round(fold_means, 3)})",
+              flush=True)
 
     best = max(cv, key=cv.get)
     early = int(round(0.25 * (n_layers - 1)))
     late = n_layers - 1
     cfg.setdefault("models", {})[args.model] = {
+        "hf_id": hf_id,
         "n_layers": n_layers,
         "layers": {"best": best, "early": early, "late": late},
         "frozen_on": date.today().isoformat(),
@@ -117,6 +137,44 @@ def main():
                 "# Do not edit by hand; never re-pick after seeing SAE results.\n")
         yaml.safe_dump(cfg, f, sort_keys=False)
     print(f"\nFROZEN {args.model}: best={best} early={early} late={late} -> {CONFIG}")
+
+
+def tr_feats(bundle_fn, model: str, story: str, layers, n_bold: int) -> dict:
+    """{layer: (n_bold, d)} TR-level features, cached per layer as feats="dense-tr".
+
+    Reuses a word-level dense cache when one exists (GPT-2), else runs the model
+    once for all missing layers and downsamples immediately.
+    """
+    out, missing = {}, []
+    for L in layers:
+        arr = _cached(cache_path(model, L, "lebel", "dense-tr"), story)
+        if arr is None:
+            arr = _cached(cache_path(model, L, "lebel", "dense"), story)
+            if arr is not None:
+                arr = LB.tr_features(arr, story, n_bold)
+        if arr is None:
+            missing.append(L)
+        else:
+            out[L] = arr
+    if missing:
+        toks = [w for w, _, _ in D.parse_textgrid_words(story)]
+        fresh = word_activations(bundle_fn(), toks, layer=missing)
+        os.makedirs(ACT_ROOT, exist_ok=True)
+        for L, w in fresh.items():
+            out[L] = LB.tr_features(w, story, n_bold)
+            with h5py.File(cache_path(model, L, "lebel", "dense-tr"), "a") as h:
+                h.create_dataset(story, data=out[L].astype(np.float32))
+    return out
+
+
+def logged_folds(model: str) -> dict:
+    """{(layer, split, train, eval): mean_corr} of sweep folds already in runs.csv."""
+    if not RESULTS_CSV.exists():
+        return {}
+    d = pd.read_csv(RESULTS_CSV, dtype=str)
+    d = d[(d.script == "sweep_layers.py") & (d.model == model)]
+    return {(int(float(r.layer)), r.split, r.train_stories, r.eval_stories): float(r.mean_corr)
+            for r in d.itertuples()}
 
 
 if __name__ == "__main__":

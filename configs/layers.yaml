@@ -25,6 +25,82 @@ models:
       10: 0.1141
       11: 0.1085
     errata:
-    - '2026-10-25: cv_mean_corr[11] above was computed on post-ln_f activations (HF applies
-      ln_f to the last hidden state). Recomputed on raw blocks.11.hook_resid_post: 0.1069.
-      Choice unchanged (best=7 by the same rule; late=11 by rule).'
+    - '2026-10-25: cv_mean_corr[11] above was computed on post-ln_f activations (HF
+      applies ln_f to the last hidden state). Recomputed on raw blocks.11.hook_resid_post:
+      0.1069. Choice unchanged (best=7 by the same rule; late=11 by rule).'
+  gemma-2-2b:
+    hf_id: google/gemma-2-2b
+    n_layers: 26
+    layers:
+      best: 13
+      early: 6
+      late: 25
+    frozen_on: '2026-10-27'
+    selection: best = max mean story-level 5-fold CV corr within the 25 training stories
+      (subject UTS01, top 10000 voxels); early = round(0.25*(n_layers-1)); late =
+      n_layers-1. Test story never used. Chosen before any SAE result.
+    cv_mean_corr:
+      0: 0.0932
+      1: 0.1021
+      2: 0.1117
+      3: 0.1189
+      4: 0.1267
+      5: 0.1318
+      6: 0.1325
+      7: 0.1363
+      8: 0.1354
+      9: 0.14
+      10: 0.1414
+      11: 0.1436
+      12: 0.1447
+      13: 0.1457
+      14: 0.1436
+      15: 0.1402
+      16: 0.1359
+      17: 0.1341
+      18: 0.1326
+      19: 0.132
+      20: 0.1306
+      21: 0.1282
+      22: 0.1256
+      23: 0.1239
+      24: 0.1247
+      25: 0.1198
+  gemma-3-1b-pt:
+    hf_id: google/gemma-3-1b-pt
+    n_layers: 26
+    layers:
+      best: 10
+      early: 6
+      late: 25
+    frozen_on: '2026-10-27'
+    selection: best = max mean story-level 5-fold CV corr within the 25 training stories
+      (subject UTS01, top 10000 voxels); early = round(0.25*(n_layers-1)); late =
+      n_layers-1. Test story never used. Chosen before any SAE result.
+    cv_mean_corr:
+      0: 0.0885
+      1: 0.0965
+      2: 0.1019
+      3: 0.109
+      4: 0.119
+      5: 0.1202
+      6: 0.1255
+      7: 0.1275
+      8: 0.1333
+      9: 0.1364
+      10: 0.1376
+      11: 0.1376
+      12: 0.1371
+      13: 0.1346
+      14: 0.1293
+      15: 0.1298
+      16: 0.1282
+      17: 0.1252
+      18: 0.1239
+      19: 0.1222
+      20: 0.121
+      21: 0.1227
+      22: 0.1211
+      23: 0.1198
+      24: 0.1197
+      25: 0.1174
